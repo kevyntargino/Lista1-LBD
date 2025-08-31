@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: mysql:3306
--- Tempo de geração: 30/08/2025 às 03:13
+-- Tempo de geração: 31/08/2025 às 14:45
 -- Versão do servidor: 9.4.0
 -- Versão do PHP: 8.2.27
 
@@ -44,29 +44,8 @@ CREATE TABLE `aluno` (
 CREATE TABLE `disciplinas` (
   `sigla` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
   `nome` varchar(128) NOT NULL,
-  `num_creditos` int NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
--- --------------------------------------------------------
-
---
--- Estrutura para tabela `disciplinas_aluno`
---
-
-CREATE TABLE `disciplinas_aluno` (
-  `id_aluno` int NOT NULL,
-  `id_turma` int NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
--- --------------------------------------------------------
-
---
--- Estrutura para tabela `disciplina_ofertada`
---
-
-CREATE TABLE `disciplina_ofertada` (
-  `sigla_faculdade` varchar(8) NOT NULL,
-  `sigla_disciplina` varchar(128) NOT NULL
+  `num_creditos` int NOT NULL,
+  `faculdade_sigla` varchar(8) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- --------------------------------------------------------
@@ -79,8 +58,31 @@ CREATE TABLE `faculdade` (
   `sigla` varchar(8) NOT NULL,
   `id_diretor` int NOT NULL,
   `bloco` varchar(32) NOT NULL,
-  `num_professores` int NOT NULL,
+  `numero_professores` int NOT NULL,
+  `numero_alunos` int NOT NULL,
   `orcamento` float NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `iniciacao_cientifica`
+--
+
+CREATE TABLE `iniciacao_cientifica` (
+  `id_professor` int NOT NULL,
+  `id_aluno` int NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `matricula_aluno`
+--
+
+CREATE TABLE `matricula_aluno` (
+  `id_aluno` int NOT NULL,
+  `id_turma` int NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- --------------------------------------------------------
@@ -91,10 +93,21 @@ CREATE TABLE `faculdade` (
 
 CREATE TABLE `professor` (
   `id` int NOT NULL,
-  `faculdade` varchar(8) NOT NULL,
+  `faculdade_sigla` varchar(8) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
   `nome` varchar(256) NOT NULL,
   `data_nascimento` date NOT NULL,
   `salario` float NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `professor_turma`
+--
+
+CREATE TABLE `professor_turma` (
+  `id_turma` int NOT NULL,
+  `id_professor` int NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- --------------------------------------------------------
@@ -140,11 +153,11 @@ CREATE TABLE `telefone_aluno` (
 
 CREATE TABLE `turma` (
   `id` int NOT NULL,
-  `numero_local` int NOT NULL,
   `sigla_disciplina` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
-  `id_professor` int NOT NULL,
   `semestre` int NOT NULL,
-  `ano` int NOT NULL
+  `ano` int NOT NULL,
+  `nome_bloco` varchar(128) NOT NULL,
+  `numero_sala` int NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
@@ -162,21 +175,8 @@ ALTER TABLE `aluno`
 -- Índices de tabela `disciplinas`
 --
 ALTER TABLE `disciplinas`
-  ADD PRIMARY KEY (`sigla`);
-
---
--- Índices de tabela `disciplinas_aluno`
---
-ALTER TABLE `disciplinas_aluno`
-  ADD KEY `fk_aluno_turma` (`id_aluno`),
-  ADD KEY `fk_turma_aluno` (`id_turma`);
-
---
--- Índices de tabela `disciplina_ofertada`
---
-ALTER TABLE `disciplina_ofertada`
-  ADD KEY `fk_disciplina_faculdade` (`sigla_disciplina`),
-  ADD KEY `fk_faculdade_disciplina` (`sigla_faculdade`);
+  ADD PRIMARY KEY (`sigla`),
+  ADD KEY `fk_faculdade_disciplina` (`faculdade_sigla`);
 
 --
 -- Índices de tabela `faculdade`
@@ -186,11 +186,32 @@ ALTER TABLE `faculdade`
   ADD KEY `fk_diretor_faculdade` (`id_diretor`);
 
 --
+-- Índices de tabela `iniciacao_cientifica`
+--
+ALTER TABLE `iniciacao_cientifica`
+  ADD KEY `fk_orientador_aluno` (`id_professor`),
+  ADD KEY `fk_aluno_orientador` (`id_aluno`);
+
+--
+-- Índices de tabela `matricula_aluno`
+--
+ALTER TABLE `matricula_aluno`
+  ADD KEY `fk_aluno_turma` (`id_aluno`),
+  ADD KEY `fk_turma_aluno` (`id_turma`);
+
+--
 -- Índices de tabela `professor`
 --
 ALTER TABLE `professor`
   ADD PRIMARY KEY (`id`),
-  ADD KEY `fk_faculdade_professor` (`faculdade`);
+  ADD KEY `fk_faculdade_professor` (`faculdade_sigla`);
+
+--
+-- Índices de tabela `professor_turma`
+--
+ALTER TABLE `professor_turma`
+  ADD KEY `fk_professor_turma` (`id_professor`),
+  ADD KEY `fk_turma_professor` (`id_turma`);
 
 --
 -- Índices de tabela `requisito_disciplina`
@@ -203,7 +224,7 @@ ALTER TABLE `requisito_disciplina`
 -- Índices de tabela `sala_de_aula`
 --
 ALTER TABLE `sala_de_aula`
-  ADD PRIMARY KEY (`numero_sala`);
+  ADD PRIMARY KEY (`nome_bloco`,`numero_sala`);
 
 --
 -- Índices de tabela `telefone_aluno`
@@ -216,9 +237,8 @@ ALTER TABLE `telefone_aluno`
 --
 ALTER TABLE `turma`
   ADD PRIMARY KEY (`id`),
-  ADD KEY `fk_professor_turma` (`id_professor`),
   ADD KEY `fk_disciplina_turma` (`sigla_disciplina`),
-  ADD KEY `fk_sala_turma` (`numero_local`);
+  ADD KEY `fk_composta_local` (`nome_bloco`,`numero_sala`);
 
 --
 -- AUTO_INCREMENT para tabelas despejadas
@@ -247,18 +267,10 @@ ALTER TABLE `aluno`
   ADD CONSTRAINT `fk_facul_aluno` FOREIGN KEY (`sigla_facul`) REFERENCES `faculdade` (`sigla`) ON DELETE RESTRICT ON UPDATE RESTRICT;
 
 --
--- Restrições para tabelas `disciplinas_aluno`
+-- Restrições para tabelas `disciplinas`
 --
-ALTER TABLE `disciplinas_aluno`
-  ADD CONSTRAINT `fk_aluno_turma` FOREIGN KEY (`id_aluno`) REFERENCES `aluno` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT,
-  ADD CONSTRAINT `fk_turma_aluno` FOREIGN KEY (`id_turma`) REFERENCES `turma` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT;
-
---
--- Restrições para tabelas `disciplina_ofertada`
---
-ALTER TABLE `disciplina_ofertada`
-  ADD CONSTRAINT `fk_disciplina_faculdade` FOREIGN KEY (`sigla_disciplina`) REFERENCES `disciplinas` (`sigla`) ON DELETE RESTRICT ON UPDATE RESTRICT,
-  ADD CONSTRAINT `fk_faculdade_disciplina` FOREIGN KEY (`sigla_faculdade`) REFERENCES `faculdade` (`sigla`) ON DELETE RESTRICT ON UPDATE RESTRICT;
+ALTER TABLE `disciplinas`
+  ADD CONSTRAINT `fk_faculdade_disciplina` FOREIGN KEY (`faculdade_sigla`) REFERENCES `faculdade` (`sigla`) ON DELETE RESTRICT ON UPDATE RESTRICT;
 
 --
 -- Restrições para tabelas `faculdade`
@@ -267,10 +279,31 @@ ALTER TABLE `faculdade`
   ADD CONSTRAINT `fk_diretor_faculdade` FOREIGN KEY (`id_diretor`) REFERENCES `professor` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT;
 
 --
+-- Restrições para tabelas `iniciacao_cientifica`
+--
+ALTER TABLE `iniciacao_cientifica`
+  ADD CONSTRAINT `fk_aluno_orientador` FOREIGN KEY (`id_aluno`) REFERENCES `aluno` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT,
+  ADD CONSTRAINT `fk_orientador_aluno` FOREIGN KEY (`id_professor`) REFERENCES `professor` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT;
+
+--
+-- Restrições para tabelas `matricula_aluno`
+--
+ALTER TABLE `matricula_aluno`
+  ADD CONSTRAINT `fk_aluno_turma` FOREIGN KEY (`id_aluno`) REFERENCES `aluno` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT,
+  ADD CONSTRAINT `fk_turma_aluno` FOREIGN KEY (`id_turma`) REFERENCES `turma` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT;
+
+--
 -- Restrições para tabelas `professor`
 --
 ALTER TABLE `professor`
-  ADD CONSTRAINT `fk_faculdade_professor` FOREIGN KEY (`faculdade`) REFERENCES `faculdade` (`sigla`) ON DELETE RESTRICT ON UPDATE RESTRICT;
+  ADD CONSTRAINT `fk_faculdade_professor` FOREIGN KEY (`faculdade_sigla`) REFERENCES `faculdade` (`sigla`) ON DELETE RESTRICT ON UPDATE RESTRICT;
+
+--
+-- Restrições para tabelas `professor_turma`
+--
+ALTER TABLE `professor_turma`
+  ADD CONSTRAINT `fk_professor_turma` FOREIGN KEY (`id_professor`) REFERENCES `professor` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT,
+  ADD CONSTRAINT `fk_turma_professor` FOREIGN KEY (`id_turma`) REFERENCES `turma` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT;
 
 --
 -- Restrições para tabelas `requisito_disciplina`
@@ -289,9 +322,8 @@ ALTER TABLE `telefone_aluno`
 -- Restrições para tabelas `turma`
 --
 ALTER TABLE `turma`
-  ADD CONSTRAINT `fk_disciplina_turma` FOREIGN KEY (`sigla_disciplina`) REFERENCES `disciplinas` (`sigla`) ON DELETE RESTRICT ON UPDATE RESTRICT,
-  ADD CONSTRAINT `fk_professor_turma` FOREIGN KEY (`id_professor`) REFERENCES `professor` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT,
-  ADD CONSTRAINT `fk_sala_turma` FOREIGN KEY (`numero_local`) REFERENCES `sala_de_aula` (`numero_sala`) ON DELETE RESTRICT ON UPDATE RESTRICT;
+  ADD CONSTRAINT `fk_composta_local` FOREIGN KEY (`nome_bloco`,`numero_sala`) REFERENCES `sala_de_aula` (`nome_bloco`, `numero_sala`) ON DELETE RESTRICT ON UPDATE RESTRICT,
+  ADD CONSTRAINT `fk_disciplina_turma` FOREIGN KEY (`sigla_disciplina`) REFERENCES `disciplinas` (`sigla`) ON DELETE RESTRICT ON UPDATE RESTRICT;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
